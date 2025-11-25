@@ -1,0 +1,29 @@
+*** Some notes about the accuracy
+* Assumptions: It is supposed that the 2V5 reference and 1V5 from resistor divider are fixed and they don't have temperature drift and aging. One can do more calculations 
+  for the accuracy related to the TL431 and resistor divider. In my project, the accuracy and drift of TL431, and of 1% thick film resistors were good enough.
+  Another assumption is that the capacitor 100nF-X5R has no voltage-capacitance dependency. Because the working voltage is far less than the nominal (3V << 50V), it isn't 
+  a bad assumption. For more accuracy and linearity, a film capacitor or C0G (NPO) capacitor can be used.
+* Current source. To generate a constant current to charge the capacitor, I used the simplest current source, which is described in Electronics 2 (in the university).
+  For voltage reference, I used a RED LED! Obviously, the voltage drop of the LED and the Vbe of the transistor vary by temperature and aging and they affect the amount of 
+  current. But NO problem, they are calibrated at each reading procedure.
+* Propagation delay. The LM393 Comparator isn't the fastest. Also, the PC817 isn't. They
+  have some uS propagation delay which may vary by temperature and aging. But NO problem, they are calibrated at each reading procedure.
+* Analog switch. The analog switch 4052 isn't the most ideal switch. It has high Ron and is a bit slow. But in this circuit, they don't make trouble.
+* Microcontroller clock accuracy. I used internal RC of the stm32 as the main clock. Obviously, it has some tolerance (about +-1%) and varies with temperature and aging.
+  But NO problem, they are calibrated at each reading procedure.
+• Reading procedure.
+The current source is about 100μA and the capacitance is 100nF. The maximum value seen at the resistor divider of the input voltage is about 3V. So, the maximum time for 
+the capacitor to reach 3V is about 3ms. In the firmware, I dedicated 4ms for charging the capacitor and 1ms for discharging. The Ron value of 4052 is about 1kΩ. So, 
+the capacitor discharge time is about 500us.
+I = C * dv / dt => dt_charge = 100n * 3 / 100u = 3ms
+t_discharge = 5 * R * C = 5 * 100n * 1k = 500us 
+
+In the firmware, the FT_Capt() function is called every 5ms. Its reading procedure includes 3 stages, and the three input voltages must be read (1V5, 2V5, and Vin).
+I measure the time by TIM14, and the falling edge of the optocoupler is captured by TIM14_CH1. The three time durations are stored in a 2D array and their mean values are 
+calculated.
+In this project the frequency of CPU and TIM14 was 2MHz.
+• Calibration procedure
+To calibrate, I vary the input voltage so that its time duration reaches the time of 1V5 input. Then I measure the input voltage with a multimeter and write it.
+I increase the input voltage until it reaches the time of the 2V5 input. Again, I measure the input voltage with a multimeter and write it. These two voltages which 
+were measured by a multimeter are calibration constants and relate to the 1V5 and 2V5 input voltages. Despite the time durations of the 1V5 and 2V5 vary with temperature 
+variation and aging, they always relate to the calibration constants.
